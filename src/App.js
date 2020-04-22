@@ -34,7 +34,15 @@ class App extends Component {
       imageUrl: "",
       boxes: [],
       route: "signin",
-      isSignedIn: false
+      isSignedIn: false,
+      user: {
+        id: '',
+        name: '',
+        email: '',
+        password: '',
+        entries: 0,
+        joined: ''
+      }
     }
   }
 
@@ -64,6 +72,19 @@ class App extends Component {
     this.setState({boxes: []});
     clarifaiApp.models.predict(Clarifai.FACE_DETECT_MODEL, this.state.input)
       .then(response => {
+        if (response) {
+          fetch("http://localhost:3000/image", {
+            method: "put",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+              id: this.state.user.id
+            })
+          })
+          .then(response => response.json())
+          .then(count => {
+            this.setState(Object.assign(this.state.user, {entries: count}));
+          })
+        }
         for (var i = 0; i < response.outputs[0].data.regions.length; i++) {
           this.displayFaceBorder(this.calculateFaceLocation(response, i));
         }
@@ -80,15 +101,19 @@ class App extends Component {
     this.setState({route: newRoute});
   }
 
+  loadUser = (user) => {
+    this.setState({user: user});
+  }
+
   render () {
-    const { input, imageUrl, boxes, route, isSignedIn} = this.state;
+    const { input, imageUrl, boxes, route, isSignedIn, user} = this.state;
     if (route === "home") {
       return (
         <div>
           <Particles params={particlesOptions} className="particles" />
           <Navigation onRouteChange={this.onRouteChange} isSignedIn={isSignedIn}/>
           <Logo />
-          <Rank />
+          <Rank name={user.name} entries={user.entries}/>
           <ImageLinkForm 
             onButtonChange={this.onButtonChange} 
             onInputChange={this.onInputChange}
@@ -101,7 +126,7 @@ class App extends Component {
         <div>
           <Particles params={particlesOptions} className="particles" />
           <Navigation onRouteChange={this.onRouteChange}/>
-          <Signin onRouteChange={this.onRouteChange}/>
+          <Signin loadUser={this.loadUser} onRouteChange={this.onRouteChange}/>
         </div>
       )
     } else if (route === "register") {
@@ -109,7 +134,7 @@ class App extends Component {
         <div>
           <Particles params={particlesOptions} className="particles" />
           <Navigation onRouteChange={this.onRouteChange} isSignedIn={isSignedIn}/>
-          <Register onRouteChange={this.onRouteChange}/>
+          <Register loadUser={this.loadUser} onRouteChange={this.onRouteChange}/>
         </div>
       )
     }

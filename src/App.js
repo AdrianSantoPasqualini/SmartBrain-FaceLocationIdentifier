@@ -96,7 +96,11 @@ class App extends Component {
     if (newRoute === "home") {
       this.setState({isSignedIn: true});
     } else {
-      this.setState({isSignedIn:false});
+      this.setState({
+        isSignedIn:false,
+        input: "",
+        imageUrl: "",
+        boxes: []});
     }
     this.setState({route: newRoute});
   }
